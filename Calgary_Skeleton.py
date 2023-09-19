@@ -56,7 +56,10 @@ class Parser:
         totalrequests=0
         totalbytes=0
         total_successful=0
+        totalbytes_successful=0
         first_date_recorded = True
+        dict_content={}
+        set_byte={}
         dict_status={'Successful':0,'Found':0,'Not Modified':0,'Unsuccessful':0}
         dict_address={'remote':0,'local':0}
         dict_bytes={'remote':0,'local':0}
@@ -122,8 +125,22 @@ class Parser:
                 type_file_dict[fileType]+=1
             if self.checkResCode(responseCode)=="Successful":
                 byte_file_dict[fileType]+=int(replySizeInBytes)/1024/1024
+            if self.checkResCode(responseCode) == "Successful":
+                if requestFileName not in dict_content:
+                    dict_content[requestFileName]=1
+                else:
+                    dict_content[requestFileName]=dict_content[requestFileName]+1
+            if self.checkResCode(responseCode) == "Successful":
+                totalbytes_successful+=int(replySizeInBytes)
+                if replySizeInBytes not in set_byte:
+                    set_byte[replySizeInBytes]=1
+                else:
+                    set_byte[replySizeInBytes]=set_byte[replySizeInBytes]+1
         # Outside the for loop, generate statistics output
         totalbytes=totalbytes/1024/1024
+        sorted_dict = dict(sorted(dict_content.items(), key=lambda item: item[1], reverse=True))
+        count_content = sum(1 for value in sorted_dict.values() if value == 1)
+        count_byte=sum(1 for value in set_byte.values() if value == 1)
         self.numberOfDays = (self.endDate - self.startDate).days+1
         averageRequestsPerDay = totalrequests / self.numberOfDays
         averagetransferbytesperday=totalbytes/self.numberOfDays
@@ -131,28 +148,38 @@ class Parser:
         # print(f"End date: {self.endDate}")
         #print(f"Number of days: {self.numberOfDays}")
         #print(f"Total number of requests: {totalrequests}")
-        print(f"Answer2:Average number of requests per day: {'%.2f'%averageRequestsPerDay}")
-        print(f"Answer3:Total bytes transferred: {'%.2f'%totalbytes}MB")
-        print(f"Answer4:Average bytes per day: {'%.2f' % averagetransferbytesperday}MB/day")
-        print(f"Answer5:Successful:{'%.2f'%(dict_status['Successful']/totalrequests*100)}%\nFound:{'%.2f'%(dict_status['Found']/totalrequests*100)}%\nNot Modified:{'%.2f'%(dict_status['Not Modified']*100/totalrequests)}%\nUnsuccessful：{'%.2f'%(dict_status['Unsuccessful']*100/totalrequests)}%")
-        print(f"Answer6:remote:{'%.2f'%(dict_address['remote']/total_successful*100)}%\nlocal:{'%.2f'%(dict_address['local']/total_successful*100)}%")
-        print(f"Answer7:remote:{'%.2f'%(dict_bytes['remote']/(totalbytes)*100)}%\nlocal:{'%.2f'%(dict_bytes['local']/(totalbytes)*100)}%")
-        print(f"Answer8:HTML:{'%.2f'%(type_file_dict['HTML']/total_successful*100)}%\n"
+        print(f"Answer2:\nAverage number of requests per day: {'%.2f'%averageRequestsPerDay}")
+        print(f"Answer3:\nTotal bytes transferred: {'%.2f'%totalbytes}MB")
+        print(f"Answer4:\nAverage bytes per day: {'%.2f' % averagetransferbytesperday}MB/day")
+        print(f"Answer5:\nSuccessful:{'%.2f'%(dict_status['Successful']/totalrequests*100)}%\nFound:{'%.2f'%(dict_status['Found']/totalrequests*100)}%\nNot Modified:{'%.2f'%(dict_status['Not Modified']*100/totalrequests)}%\nUnsuccessful：{'%.2f'%(dict_status['Unsuccessful']*100/totalrequests)}%")
+        print(f"Answer6:\nremote:{'%.2f'%(dict_address['remote']/total_successful*100)}%\nlocal:{'%.2f'%(dict_address['local']/total_successful*100)}%")
+        print(f"Answer7:\nremote:{'%.2f'%(dict_bytes['remote']/(totalbytes)*100)}%\nlocal:{'%.2f'%(dict_bytes['local']/(totalbytes)*100)}%")
+        print(f"Answer8:\nHTML:{'%.2f'%(type_file_dict['HTML']/total_successful*100)}%\n"
               f"Images:{'%.2f'%(type_file_dict['Images']/total_successful*100)}%\n"
               f"Sound:{'%.2f'%(type_file_dict['Sound']/total_successful*100)}%\n"
               f"Video:{'%.2f'%(type_file_dict['Video']/total_successful*100)}%\n"
               f"Formatted:{'%.2f'%(type_file_dict['Formatted']/total_successful*100)}%\n"
               f"Dynamic:{'%.2f'%(type_file_dict['Dynamic']/total_successful*100)}%\n"
-              f"Others:{'%.2f'%(type_file_dict['Others']/total_successful*100)}%\n"
+              f"Others:{'%.2f'%(type_file_dict['Others']/total_successful*100)}%"
               )
-        print(f"Answer9:HTML:{'%.2f'%(byte_file_dict['HTML']/totalbytes*100)}%\n"
+        print(f"Answer9:\nHTML:{'%.2f'%(byte_file_dict['HTML']/totalbytes*100)}%\n"
               f"Images:{'%.2f'%(byte_file_dict['Images']/totalbytes*100)}%\n"
               f"Sound:{'%.2f'%(byte_file_dict['Sound']/totalbytes*100)}%\n"
               f"Video:{'%.2f'%(byte_file_dict['Video']/totalbytes*100)}%\n"
               f"Formatted:{'%.2f'%(byte_file_dict['Formatted']/totalbytes*100)}%\n"
               f"Dynamic:{'%.2f'%(byte_file_dict['Dynamic']/totalbytes*100)}%\n"
-              f"Others:{'%.2f'%(byte_file_dict['Others']/totalbytes*100)}%\n"
+              f"Others:{'%.2f'%(byte_file_dict['Others']/totalbytes*100)}%"
               )
+        print(f"Answer10:\nHTML:{'%.2f'%(byte_file_dict['HTML'] *1024*1024/type_file_dict['HTML'])}bytes\n"
+              f"Images:{'%.2f'%(byte_file_dict['Images'] *1024*1024/ type_file_dict['Images'])}bytes\n"
+              f"Sound:{'%.2f'%(byte_file_dict['Sound']*1024*1024 /type_file_dict['Sound'])}bytes\n"
+              f"Video:{'%.2f'%(byte_file_dict['Video'] *1024*1024/type_file_dict['Video'])}bytes\n"
+              f"Formatted:{'%.2f'%(byte_file_dict['Formatted']*1024*1024 / type_file_dict['Formatted'])}bytes\n"
+              f"Dynamic:{'%.2f'%(byte_file_dict['Dynamic']*1024*1024 / type_file_dict['Dynamic'])}bytes\n"
+              f"Others:{'%.2f'%(byte_file_dict['Others'] *1024*1024/type_file_dict['Others'])}bytes"
+              )
+        print(f"Answer11:\npercentage of unique objects are accessed only once in the log {'%.2f'%(count_content/total_successful*100)}%"
+              f"\npercentage of bytes are  accessed only once in the log {'%.2f'%(count_byte/total_successful*100)}%")
 
 
 
