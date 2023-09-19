@@ -55,10 +55,12 @@ class Parser:
         index = 0
         totalrequests=0
         totalbytes=0
+        total_successful=0
         first_date_recorded = True
         dict_status={'Successful':0,'Found':0,'Not Modified':0,'Unsuccessful':0}
         dict_address={'remote':0,'local':0}
         dict_bytes={'remote':0,'local':0}
+        type_file_dict={'HTML':0,'Images':0,'Sound':0,'Video':0,'Formatted':0,'Dynamic':0,'Others':0}
         for line in logFile:
             elements = line.split()
 
@@ -81,7 +83,7 @@ class Parser:
             replySizeInBytes = elements[len(elements) - 1]
             if not responseCode.isdigit():continue
             if replySizeInBytes.isdigit():
-                totalbytes+=int(replySizeInBytes)/1000000
+                totalbytes+=int(replySizeInBytes)
             else:
                 replySizeInBytes=0
             totalrequests += 1
@@ -109,25 +111,38 @@ class Parser:
                     self.startDate = datetime.strptime(timeStr, "%d/%b/%Y:%H:%M:%S")
                 elif datetime.strptime(timeStr, "%d/%b/%Y:%H:%M:%S") > self.endDate:
                     self.endDate = datetime.strptime(timeStr, "%d/%b/%Y:%H:%M:%S")
+            if self.checkResCode(responseCode) == "Successful":
+                total_successful+=1
             if self.checkResCode(responseCode)=="Successful":
                 dict_address[sourceAddress.lower()]+=1
             if self.checkResCode(responseCode)=="Successful":
                 dict_bytes[sourceAddress.lower()]+=int(replySizeInBytes)
-
+            if self.checkResCode(responseCode)=="Successful":
+                type_file_dict[fileType]+=1
         # Outside the for loop, generate statistics output
-        self.numberOfDays = (self.endDate - self.startDate).days
+        totalbytes=totalbytes/1024/1024
+        self.numberOfDays = (self.endDate - self.startDate).days+1
         averageRequestsPerDay = totalrequests / self.numberOfDays
         averagetransferbytesperday=totalbytes/self.numberOfDays
         # print(f"Start date: {self.startDate}")
         # print(f"End date: {self.endDate}")
-        # print(f"Number of days: {self.numberOfDays}")
-        # print(f"Total number of requests: {totalrequests}")
+        #print(f"Number of days: {self.numberOfDays}")
+        #print(f"Total number of requests: {totalrequests}")
         print(f"Answer2:Average number of requests per day: {'%.2f'%averageRequestsPerDay}")
         print(f"Answer3:Total bytes transferred: {'%.2f'%totalbytes}MB")
         print(f"Answer4:Average bytes per day: {'%.2f' % averagetransferbytesperday}MB/day")
         print(f"Answer5:Successful:{'%.2f'%(dict_status['Successful']/totalrequests*100)}%\nFound:{'%.2f'%(dict_status['Found']/totalrequests*100)}%\nNot Modified:{'%.2f'%(dict_status['Not Modified']*100/totalrequests)}%\nUnsuccessful：{'%.2f'%(dict_status['Unsuccessful']*100/totalrequests)}%")
-        print(f"Answer6:remote:{'%.2f'%(dict_address['remote']/(dict_address['remote']+dict_address['local'])*100)}%\nlocal:{'%.2f'%(dict_address['local']/(dict_address['remote']+dict_address['local'])*100)}%")
+        print(f"Answer6:remote:{'%.2f'%(dict_address['remote']/total_successful*100)}%\nlocal:{'%.2f'%(dict_address['local']/total_successful*100)}%")
         print(f"Answer7:remote:{'%.2f'%(dict_bytes['remote']/(dict_bytes['remote']+dict_bytes['local'])*100)}%\nlocal:{'%.2f'%(dict_bytes['local']/(dict_bytes['remote']+dict_bytes['local'])*100)}%")
+        print(f"Answer8:HTML:{'%.2f'%(type_file_dict['HTML']/total_successful*100)}%\n"
+              f"Images:{'%.2f'%(type_file_dict['Images']/total_successful*100)}%\n"
+              f"Sound:{'%.2f'%(type_file_dict['Sound']/total_successful*100)}%\n"
+              f"Video:{'%.2f'%(type_file_dict['Video']/total_successful*100)}%\n"
+              f"Formatted:{'%.2f'%(type_file_dict['Formatted']/total_successful*100)}%\n"
+              f"Dynamic:{'%.2f'%(type_file_dict['Dynamic']/total_successful*100)}%\n"
+              f"Others:{'%.2f'%(type_file_dict['Others']/total_successful*100)}%\n"
+              )
+
 
 
 
